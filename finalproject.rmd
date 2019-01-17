@@ -1,0 +1,142 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+botData <- read.csv("bids.csv")
+```
+
+```{r}
+testSet <- read.csv("test.csv")
+```
+
+```{r}
+trainSet <- read.csv("train.csv")
+```
+
+```{r}
+trainingFull <- read.csv("training_set_bids.csv")
+```
+
+
+```{r}
+unique(botData$auction, incomparables = FALSE)
+# 15051 unique auctions
+```
+
+```{r}
+unique(botData$country,incomparables = FALSE)
+# 200 countries
+```
+
+```{r}
+unique(botData$device, incomparables = FALSE)
+# 7351 devices
+```
+
+```{r}
+unique(botData$ip,incomparables = FALSE)
+# 2303991 ips lulz
+```
+
+
+```{r}
+plot(botData$merchandise)
+```
+
+
+```{r}
+secTime <- as.POSIXct(Sys.Date())+botData$time/1000000000000000000
+botData$secTime <- secTime
+```
+
+My questions:
+
+- num of bids (total) per person/bot
+- num of total bids per auction
+- what auctions the bots liked, and if those auctions had high volume / other characteristic
+- what they liked to bid on the most
+
+
+
+Do bots participate in the same auctions?
+Using the training set, 
+- you need labelled data for predictions 
+- convert features into user attribute
+- the more participants in auctions, the more bots? (finding numbers / run t-test with auctions w/low bots vs. auctions with lots of bots)
+
+num of total bids per auction
+```{r}
+as.data.frame(table(botData$auction))
+```
+num of bids (total) per person / bot
+```{r}
+# num of bids (total) per bidder
+as.data.frame(table(trainingFull$bidder_id))
+```
+
+```{r}
+library(dplyr)
+trainingFull <- dplyr::left_join(trainingFull,trainSet,by="bidder_id")
+
+```
+
+
+Do bots typically have a high number of bids?
+```{r}
+botTrain <- subset(trainingFull, trainingFull$outcome == 1)
+as.data.frame(table(botTrain$bidder_id))
+# potentially yes!
+```
+
+num of bids per person / bot in each auction?
+```{r}
+# number of bidder ids in each auction
+lol <- trainingFull %>% group_by(trainingFull$auction, trainingFull$bidder_id) %>% summarize(count=n())
+
+# number of bot bids in each auction
+bot_auction <- botTrain %>% group_by(botTrain$auction, botTrain$bidder_id) %>% summarize(count=n())
+
+# number of unique bots in each auction (i.e. is it just one or two bots in each auction)
+uniquebot_auction <- as.data.frame(table(bot_auction$`botTrain$auction`))
+max(uniquebot_auction$Freq) #23
+mean(uniquebot_auction$Freq) #1.172606
+sd(uniquebot_auction$Freq) #1.891
+```
+
+```{r}
+# number of unique urls per person
+url_person <- trainingFull %>% group_by(trainingFull$bidder_id, trainingFull$url) %>% summarize(count=n())
+uniqueUrl <- as.data.frame(table(url_person$`trainingFull$bidder_id`))
+
+# number of unique ips per person
+ips_person <- trainingFull %>% group_by(trainingFull$bidder_id, trainingFull$ip) %>% summarize(count=n())
+uniqueIp <- as.data.frame(table(ips_person$`trainingFull$bidder_id`))
+
+# number of unique address per person
+address_person <- trainingFull %>% group_by(trainingFull$bidder_id, trainingFull$address) %>% summarize(count=n())
+uniqueAddress <- as.data.frame(table(address_person$`trainingFull$bidder_id`))
+
+# number of unique countries per person
+countries_person <- trainingFull %>% group_by(trainingFull$bidder_id, trainingFull$country) %>% summarize(count=n())
+uniqueCountry <- as.data.frame(table(countries_person$`trainingFull$bidder_id`))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
